@@ -43,11 +43,11 @@ rate() {
                 if [[ $cur_date = "$date" ]]; then
                     char=$RATE_FILLED_CHAR
                     # Choose color based on rating
-                    if [[ "$rating" -gt 6 && "$rating" -le 11 ]]; then
+                    if [[ "$rating" -ge 7 && "$rating" -le 10 ]]; then
                         color='\033[0;32m'
-                    elif [[ "$rating" -gt 3 && "$rating" -le 7 ]]; then
+                    elif [[ "$rating" -ge 4 && "$rating" -le 6 ]]; then
                         color='\033[0;33m'
-                    elif [[ "$rating" -gt 0 && "$rating" -le 4 ]]; then
+                    elif [[ "$rating" -ge 0 && "$rating" -le 3 ]]; then
                         color='\033[0;31m'
                     else
                         echo "Invalid rating: $rating" >&2
@@ -82,7 +82,7 @@ rate() {
 
     # Edit ratings data
     else
-        if [[ $# -le 4 ]]; then
+        if [[ $# -le 3 ]]; then
             date=false
             rating=false
             remove=false
@@ -135,7 +135,7 @@ rate() {
 
                 # Get rating
                 if [[ $# -gt 0 ]]; then
-                    if [[ $1 -gt 0 && $1 -le 11 ]]; then
+                    if [[ $1 -ge 1 && $1 -le 10 ]]; then
                         if [[ $rating != false ]]; then
                             echo "Rating set twice: $1" >&2
                             return 1
@@ -147,7 +147,7 @@ rate() {
                             shift
                         fi
                     else
-                        echo "Invalid rating: $rating" >&2
+                        echo "Invalid rating: $1" >&2
                         return 1
                     fi
                 fi
