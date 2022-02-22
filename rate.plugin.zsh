@@ -26,16 +26,16 @@ rate() {
 
         # Starting date is the first Monday more than three weeks before today
         # This will ensure the output is always four rows
-        cur_date=$(date -v -27d +"%Y-%m-%d")
-        while [[ $(date -j -f "%Y-%m-%d" "$cur_date" +"%w") != 1 ]]; do
-            cur_date=$(date -j -v +1d -f "%Y-%m-%d" "$cur_date" +"%Y-%m-%d")
+        cur_date=$(date -d '-27 day' +%Y-%m-%d)
+        while [[ $(date -d $cur_date +%w) != 1 ]]; do
+            cur_date=$(date -d $cur_date'+1 day' +%Y-%m-%d)
         done
 
         no_color='\033[0m'
         week="\n"
 
         last_date=$(tail -1 "$RATE_DATA_PATH" | cut -d "," -f1)
-        tomorrow=$(date -v +1d +%Y-%m-%d)
+        tomorrow=$(date -d '+1 day' +%Y-%m-%d)
 
         while IFS="," read -r date rating; do
             while ! [[ $cur_date > $date && $date != "$last_date" ]] &&
@@ -61,17 +61,17 @@ rate() {
                 # Add day to week output
                 week+=" ${color}${char}${no_color} "
                 # Print the week
-                if [ "$(date -j -f "%Y-%m-%d" "$cur_date" +"%w")" -eq 0 ]; then
+                if [ "$(date -d $cur_date +%w)" -eq 0 ]; then
                     echo -e "${week}\n"
                     week=""
                 fi
                 # Increment date
-                cur_date=$(date -j -v +1d -f "%Y-%m-%d" "$cur_date" +"%Y-%m-%d")
+                cur_date=$(date -d $cur_date'+1 day' +%Y-%m-%d)
             done
         done < <(tail -n +2 <"$RATE_DATA_PATH" | tail -28)
 
         # Print the last week
-        if [[ $(date -j -f "%Y-%m-%d" "$cur_date" +"%w") != 1 ]]; then
+        if [[ $(date -d $cur_date +%w) != 1 ]]; then
             echo -e "${week}\n"
         fi
 
@@ -115,7 +115,8 @@ rate() {
                     d)
                         date=$OPTARG
                         # Validate date
-                        if ! date -f "%Y-%m-%d" -j "$date" >/dev/null 2>&1; then
+                        if ! [[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] ||
+                            ! date -d $date >/dev/null 2>&1; then
                             echo "Invalid date: $date" >&2
                             return 1
                         fi
