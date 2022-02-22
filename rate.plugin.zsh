@@ -9,7 +9,6 @@ rate() {
     if ! [[ -f $RATE_DATA_PATH ]]; then
         touch "$RATE_DATA_PATH"
         echo "date,rating" >>"$RATE_DATA_PATH"
-        echo >>"$RATE_DATA_PATH"
     fi
 
     line_num=$(wc -l <"$RATE_DATA_PATH" | sed 's/ //g')
@@ -17,10 +16,12 @@ rate() {
     # Output rating "calendar"
     if [[ $# -eq 0 ]]; then
         # CSV only has header
+        # Temporarily add a new line to the end of the file
+        # Needed for the script to work properly
+        initial=false
         if [[ $line_num -eq 1 ]]; then
-            echo "No data: see $RATE_DATA_PATH" >&2
-            echo "Use '$0 -h' for getting started"
-            return 0
+            initial=true
+            echo >>"$RATE_DATA_PATH"
         fi
 
         # Starting date is the first Monday more than three weeks before today
@@ -72,6 +73,11 @@ rate() {
         # Print the last week
         if [[ $(date -j -f "%Y-%m-%d" "$cur_date" +"%w") != 1 ]]; then
             echo -e "${week}\n"
+        fi
+
+        # Remove the temporary line
+        if [[ $initial = true ]]; then
+            sed -i '$ d' $RATE_DATA_PATH
         fi
 
     # Edit ratings data
