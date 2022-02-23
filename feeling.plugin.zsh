@@ -1,19 +1,19 @@
-#!/bin/zsh
+#!/bin/bash
 
-RATE_DATA_PATH=$(dirname "$0")/ratings.csv
-RATE_FILLED_CHAR="●"
-RATE_EMPTY_CHAR="◯"
+FEELING_DATA_PATH=$(dirname "$0")/feelings.csv
+FEELING_FILLED_CHAR="●"
+FEELING_EMPTY_CHAR="◯"
 
-rate() {
-    # Create ratings csv file if it doesn't exist
-    if ! [[ -f $RATE_DATA_PATH ]]; then
-        touch "$RATE_DATA_PATH"
-        echo "date,rating" >>"$RATE_DATA_PATH"
+feeling() {
+    # Create feelings csv file if it doesn't exist
+    if ! [[ -f $FEELING_DATA_PATH ]]; then
+        touch "$FEELING_DATA_PATH"
+        echo "date,feeling" >>"$FEELING_DATA_PATH"
     fi
 
-    line_num=$(wc -l <"$RATE_DATA_PATH" | sed 's/ //g')
+    line_num=$(wc -l <"$FEELING_DATA_PATH" | sed 's/ //g')
 
-    # Output rating "calendar"
+    # Output feeling "calendar"
     if [[ $# -eq 0 ]]; then
         # CSV only has header
         # Temporarily add a new line to the end of the file
@@ -21,7 +21,7 @@ rate() {
         initial=false
         if [[ $line_num -eq 1 ]]; then
             initial=true
-            echo >>"$RATE_DATA_PATH"
+            echo >>"$FEELING_DATA_PATH"
         fi
 
         # Starting date is the first Monday more than three weeks before today
@@ -34,29 +34,29 @@ rate() {
         no_color='\033[0m'
         week="\n"
 
-        last_date=$(tail -1 "$RATE_DATA_PATH" | cut -d "," -f1)
+        last_date=$(tail -1 "$FEELING_DATA_PATH" | cut -d "," -f1)
         tomorrow=$(date -d '+1 day' +%Y-%m-%d)
 
-        while IFS="," read -r date rating; do
+        while IFS="," read -r date feeling; do
             while ! [[ $cur_date > $date && $date != "$last_date" ]] &&
                 ! [[ $cur_date = "$tomorrow" ]]; do
                 if [[ $cur_date = "$date" ]]; then
-                    char=$RATE_FILLED_CHAR
-                    # Choose color based on rating
-                    if [[ "$rating" -ge 7 && "$rating" -le 10 ]]; then
+                    char=$FEELING_FILLED_CHAR
+                    # Choose color based on feeling
+                    if [[ "$feeling" -ge 7 && "$feeling" -le 10 ]]; then
                         color='\033[0;32m'
-                    elif [[ "$rating" -ge 4 && "$rating" -le 6 ]]; then
+                    elif [[ "$feeling" -ge 4 && "$feeling" -le 6 ]]; then
                         color='\033[0;33m'
-                    elif [[ "$rating" -ge 0 && "$rating" -le 3 ]]; then
+                    elif [[ "$feeling" -ge 0 && "$feeling" -le 3 ]]; then
                         color='\033[0;31m'
                     else
-                        echo "Invalid rating: $rating" >&2
+                        echo "Invalid feeling: $feeling" >&2
                         return 1
                     fi
-                # Date does not have a rating
+                # Date does not have a feeling
                 else
                     color=$no_color
-                    char=$RATE_EMPTY_CHAR
+                    char=$FEELING_EMPTY_CHAR
                 fi
                 # Add day to week output
                 week+=" ${color}${char}${no_color} "
@@ -68,7 +68,7 @@ rate() {
                 # Increment date
                 cur_date=$(date -d $cur_date'+1 day' +%Y-%m-%d)
             done
-        done < <(tail -n +2 <"$RATE_DATA_PATH" | tail -28)
+        done < <(tail -n +2 <"$FEELING_DATA_PATH" | tail -28)
 
         # Print the last week
         if [[ $(date -d $cur_date +%w) != 1 ]]; then
@@ -77,14 +77,14 @@ rate() {
 
         # Remove the temporary line
         if [[ $initial = true ]]; then
-            sed -i '$ d' $RATE_DATA_PATH
+            sed -i '$ d' $FEELING_DATA_PATH
         fi
 
-    # Edit ratings data
+    # Edit feelings data
     else
         if [[ $# -le 3 ]]; then
             date=false
-            rating=false
+            feeling=false
             remove=false
 
             while [[ $# -gt 0 ]]; do
@@ -93,21 +93,21 @@ rate() {
                     case $opt in
                     h)
                         echo
-                        echo "Usage: $0 [options] <rating>" >&2
+                        echo "Usage: $0 [options] <feeling>" >&2
                         echo
-                        echo "Use script without arguments to see the current ratings"
+                        echo "Use script without arguments to see the current feelings"
                         echo
                         echo "   -r            Remove entry for specified date"
                         echo "   -d            Specify date, defaults to current date"
                         echo "   -h            Show help"
                         echo
-                        echo "   <rating>      Rating of date, must be from 1 to 10"
+                        echo "   <feeling>     How you felt on the date, must be from 1 to 10"
                         echo
                         return 0
                         ;;
                     r)
-                        if [[ $rating != false ]]; then
-                            echo "Invalid arguments: cannot use -r with rating" >&2
+                        if [[ $feeling != false ]]; then
+                            echo "Invalid arguments: cannot use -r with $feeling" >&2
                             return 1
                         fi
                         remove=true
@@ -133,21 +133,21 @@ rate() {
                 done
                 shift $((OPTIND - 1))
 
-                # Get rating
+                # Get feeling
                 if [[ $# -gt 0 ]]; then
                     if [[ $1 -ge 1 && $1 -le 10 ]]; then
-                        if [[ $rating != false ]]; then
-                            echo "Rating set twice: $1" >&2
+                        if [[ $feeling != false ]]; then
+                            echo "Feeling set twice: $1" >&2
                             return 1
                         elif [[ $remove = true ]]; then
-                            echo "Invalid arguments: cannot use -r with rating" >&2
+                            echo "Invalid arguments: cannot use -r with $1" >&2
                             return 1
                         else
-                            rating=$1
+                            feeling=$1
                             shift
                         fi
                     else
-                        echo "Invalid rating: $1" >&2
+                        echo "Invalid feeling: $1" >&2
                         return 1
                     fi
                 fi
@@ -163,11 +163,11 @@ rate() {
             date=$(date +%Y-%m-%d)
         fi
 
-        # Backup rating data
-        \cp "$RATE_DATA_PATH" "$RATE_DATA_PATH.bak"
+        # Backup feeling data
+        \cp "$FEELING_DATA_PATH" "$FEELING_DATA_PATH.bak"
 
         if [[ $remove = true ]]; then
-            sed -i "/$date/d" "$RATE_DATA_PATH"
+            sed -i "/$date/d" "$FEELING_DATA_PATH"
             return 0
         fi
 
@@ -177,9 +177,9 @@ rate() {
                 cur_date=$(cut -d "," -f1 <<<"$line")
                 # Found exact match, replace entire line
                 if [[ $date = "$cur_date" ]]; then
-                    echo "Date already rated: $date"
+                    echo "Date already has feeling: $date"
                     if read -rq "REPLY?Do you want to override? (y/n) "; then
-                        sed -i "$line_num""s/.*/$date,$rating/" "$RATE_DATA_PATH"
+                        sed -i "$line_num""s/.*/$date,$feeling/" "$FEELING_DATA_PATH"
                     fi
                     echo
                     return 0
@@ -187,9 +187,9 @@ rate() {
                     break
                 fi
                 line_num=$((line_num - 1))
-            done < <(tail -n +2 "$RATE_DATA_PATH" | tac)
+            done < <(tail -n +2 "$FEELING_DATA_PATH" | tac)
         fi
 
-        sed -i "$line_num"'a\'"$date"','"$rating" "$RATE_DATA_PATH"
+        sed -i "$line_num"'a\'"$date"','"$feeling" "$FEELING_DATA_PATH"
     fi
 }
