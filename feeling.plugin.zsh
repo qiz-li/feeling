@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 FEELING_DATA_PATH=$(dirname "$0")/feelings.csv
 FEELING_FILLED_CHAR="●"
