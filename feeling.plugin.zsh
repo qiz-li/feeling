@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-FEELING_DATA_PATH=$HOME/.config/feeling/feelings.csv
+FEELING_DATA_PATH="$HOME/.config/feeling/feelings.csv"
 FEELING_FILLED_CHAR="●"
 FEELING_EMPTY_CHAR="◯"
 
@@ -27,8 +27,8 @@ feeling() {
         # Starting date is the first Monday more than three weeks before today
         # This will ensure the output is always four rows
         cur_date=$(date -d '-27 day' +%Y-%m-%d)
-        while [[ $(date -d $cur_date +%w) != 1 ]]; do
-            cur_date=$(date -d $cur_date'+1 day' +%Y-%m-%d)
+        while [[ $(date -d "$cur_date" +%w) != 1 ]]; do
+            cur_date=$(date -d "$cur_date"'+1 day' +%Y-%m-%d)
         done
 
         no_color='\033[0m'
@@ -61,23 +61,23 @@ feeling() {
                 # Add day to week output
                 week+=" ${color}${char}${no_color} "
                 # Print the week
-                if [ "$(date -d $cur_date +%w)" -eq 0 ]; then
+                if [ "$(date -d "$cur_date" +%w)" -eq 0 ]; then
                     echo -e "${week}\n"
                     week=""
                 fi
                 # Increment date
-                cur_date=$(date -d $cur_date'+1 day' +%Y-%m-%d)
+                cur_date=$(date -d "$cur_date"'+1 day' +%Y-%m-%d)
             done
         done < <(tail -n +2 <"$FEELING_DATA_PATH" | tail -28)
 
         # Print the last week
-        if [[ $(date -d $cur_date +%w) != 1 ]]; then
+        if [[ $(date -d "$cur_date" +%w) != 1 ]]; then
             echo -e "${week}\n"
         fi
 
         # Remove the temporary line
         if [[ $initial = true ]]; then
-            sed -i '$ d' $FEELING_DATA_PATH
+            sed -i '$ d' "$FEELING_DATA_PATH"
         fi
 
     # Edit feelings data
@@ -116,7 +116,7 @@ feeling() {
                         date=$OPTARG
                         # Validate date
                         if ! [[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] ||
-                            ! date -d $date >/dev/null 2>&1; then
+                            ! date -d "$date" >/dev/null 2>&1; then
                             echo "Invalid date: $date" >&2
                             return 1
                         fi
