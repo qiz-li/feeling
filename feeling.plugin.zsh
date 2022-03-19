@@ -1,13 +1,13 @@
 #!/bin/zsh
 
-FEELING_DATA_PATH=$(dirname "$0")/feelings.csv
+FEELING_DATA_PATH=$HOME/.config/feeling/feelings.csv
 FEELING_FILLED_CHAR="●"
 FEELING_EMPTY_CHAR="◯"
 
 feeling() {
     # Create feelings csv file if it doesn't exist
     if ! [[ -f $FEELING_DATA_PATH ]]; then
-        touch "$FEELING_DATA_PATH"
+        mkdir -p "${FEELING_DATA_PATH%/*}" && touch "$FEELING_DATA_PATH"
         echo "date,feeling" >>"$FEELING_DATA_PATH"
     fi
 
