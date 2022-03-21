@@ -1,19 +1,19 @@
-<h3 align="center"><code>Feeling</code></h3>
-
-<p align="center">A Zsh script for your <i>feelings</i></p>
-
+<h3 align="center">
+  <code>Feeling</code>
+</h3>
+<p align="center">A Zsh script for your <i>feelings</i>
+</p>
 <p align="center">
   <img width="700" src="feeling.svg" />
 </p>
 <p align="center">
-  <sub>
-    Demo made with
+  <sub>Demo made with
+    <code> <a href="https://github.com/marionebl/svg-term-cli">svg-term-cli</a></code>
+      using my
     <code>
-      <a href="https://github.com/marionebl/svg-term-cli">svg-term-cli</a>
-    </code>
-    using my
-    <code>
-      <a href="https://github.com/qiz-li/dotfiles"><b>dotfiles</b></a>
+      <a href="https://github.com/qiz-li/dotfiles">
+        <b>dotfiles</b>
+      </a>
     </code>
   </sub>
 </p>
@@ -61,7 +61,7 @@ antigen bundle qiz-li/feeling@main
 
 #### `FEELING_DATA_PATH`
 
-Path to file in which your feeling and corresponding dates will be stored.
+Path to file in which your feelings and corresponding dates will be stored.
 Defaults to `~/.config/feeling/feelings.csv`.
 
 #### `FEELING_FILLED_CHAR`
