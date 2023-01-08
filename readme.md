@@ -10,11 +10,7 @@
   <sub>Demo made with
     <code> <a href="https://github.com/marionebl/svg-term-cli">svg-term-cli</a></code>
       using my
-    <code>
-      <a href="https://github.com/qiz-li/dotfiles">
-        <b>dotfiles</b>
-      </a>
-    </code>
+    <code><a href="https://github.com/qiz-li/dotfiles"><b>dotfiles</b></a></code>
   </sub>
 </p>
 
