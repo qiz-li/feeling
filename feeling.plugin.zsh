@@ -3,8 +3,23 @@
 zmodload zsh/datetime
 
 FEELING_DATA_PATH="${FEELING_DATA_PATH:-$HOME/.config/feeling/feelings.csv}"
-FEELING_FILLED_CHAR="●"
-FEELING_EMPTY_CHAR="◯"
+FEELING_FILLED_CHAR="${FEELING_FILLED_CHAR:-●}"
+FEELING_EMPTY_CHAR="${FEELING_EMPTY_CHAR:-◯}"
+
+# Atomic write - write to temp file, then rename (atomic on POSIX)
+_feeling_write() {
+    local tmp="$FEELING_DATA_PATH.tmp.$$"
+    printf '%s\n' "$@" > "$tmp" && \mv -f "$tmp" "$FEELING_DATA_PATH"
+}
+
+# Rotate backups (keep last 3)
+_feeling_backup() {
+    [[ -f "$FEELING_DATA_PATH" ]] || return 0
+    [[ -f "$FEELING_DATA_PATH.bak.2" ]] && \rm -f "$FEELING_DATA_PATH.bak.2"
+    [[ -f "$FEELING_DATA_PATH.bak.1" ]] && \mv -f "$FEELING_DATA_PATH.bak.1" "$FEELING_DATA_PATH.bak.2"
+    [[ -f "$FEELING_DATA_PATH.bak" ]] && \mv -f "$FEELING_DATA_PATH.bak" "$FEELING_DATA_PATH.bak.1"
+    \cp "$FEELING_DATA_PATH" "$FEELING_DATA_PATH.bak"
+}
 
 feeling() {
     # Create feelings csv file if it doesn't exist
@@ -13,9 +28,15 @@ feeling() {
         echo "date,feeling" >>"$FEELING_DATA_PATH"
     fi
 
-    # Cache file contents in array
-    local -a _lines
-    _lines=("${(@f)$(< "$FEELING_DATA_PATH")}")
+    # Cache file contents in array (with validation)
+    local -a _lines=()
+    local _line
+    while IFS= read -r _line || [[ -n $_line ]]; do
+        # Only keep valid lines: header or date,feeling format
+        if [[ $_line == "date,feeling" ]] || [[ $_line =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2},[0-9]+$ ]]; then
+            _lines+=("$_line")
+        fi
+    done < "$FEELING_DATA_PATH"
     local line_num=${#_lines}
 
     # Output feeling "calendar"
@@ -192,8 +213,8 @@ feeling() {
             strftime -s date '%Y-%m-%d' $EPOCHSECONDS
         fi
 
-        # Backup feeling data
-        \cp "$FEELING_DATA_PATH" "$FEELING_DATA_PATH.bak"
+        # Backup feeling data (rotating backups)
+        _feeling_backup
 
         if [[ $remove = true ]]; then
             # Remove line matching date using array filtering
@@ -203,7 +224,7 @@ feeling() {
             for entry in "${data_entries[@]}"; do
                 [[ "${entry%%,*}" != "$date" ]] && new_lines+=("$entry")
             done
-            printf '%s\n' "${new_lines[@]}" > "$FEELING_DATA_PATH"
+            _feeling_write "${new_lines[@]}"
             return 0
         fi
 
@@ -220,7 +241,7 @@ feeling() {
                     echo "Date already has feeling: $date"
                     if read -rq "REPLY?Do you want to override? (y/n) "; then
                         _lines[$line_num]="$date,$feeling"
-                        printf '%s\n' "${_lines[@]}" > "$FEELING_DATA_PATH"
+                        _feeling_write "${_lines[@]}"
                     fi
                     echo
                     return 0
@@ -233,6 +254,6 @@ feeling() {
 
         # Insert new entry after line_num
         local -a new_lines=("${_lines[@]:0:$line_num}" "$date,$feeling" "${_lines[@]:$line_num}")
-        printf '%s\n' "${new_lines[@]}" > "$FEELING_DATA_PATH"
+        _feeling_write "${new_lines[@]}"
     fi
 }
