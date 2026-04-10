@@ -1,6 +1,8 @@
 #!/bin/zsh
 
-FEELING_DATA_PATH="$HOME/.config/feeling/feelings.csv"
+zmodload zsh/datetime
+
+FEELING_DATA_PATH="${FEELING_DATA_PATH:-$HOME/.config/feeling/feelings.csv}"
 FEELING_FILLED_CHAR="●"
 FEELING_EMPTY_CHAR="◯"
 
@@ -11,73 +13,98 @@ feeling() {
         echo "date,feeling" >>"$FEELING_DATA_PATH"
     fi
 
-    line_num=$(wc -l <"$FEELING_DATA_PATH" | sed 's/ //g')
+    # Cache file contents in array
+    local -a _lines
+    _lines=("${(@f)$(< "$FEELING_DATA_PATH")}")
+    local line_num=${#_lines}
 
     # Output feeling "calendar"
     if [[ $# -eq 0 ]]; then
-        # CSV only has header
-        # Temporarily add a new line to the end of the file
-        # Needed for the script to work properly
-        initial=false
-        if [[ $line_num -eq 1 ]]; then
-            initial=true
-            echo >>"$FEELING_DATA_PATH"
+        # Get data lines (skip header), last 28 entries
+        local -a data_lines=("${_lines[@]:1}")
+        local -a recent_entries=("${data_lines[@]: -28}")
+
+        # Get last date from data
+        local last_date=""
+        if [[ ${#data_lines} -gt 0 && -n "${data_lines[-1]}" ]]; then
+            last_date="${data_lines[-1]%%,*}"
         fi
 
-        # Starting date is the first Monday more than three weeks before today
-        # This will ensure the output is always four rows
-        cur_date=$(date -d '-27 day' +%Y-%m-%d)
-        while [[ $(date -d "$cur_date" +%w) != 1 ]]; do
-            cur_date=$(date -d "$cur_date"'+1 day' +%Y-%m-%d)
+        # Calculate start epoch: 27 days ago, find next Monday
+        local start_epoch=$((EPOCHSECONDS - 86400 * 27))
+        local dow
+        strftime -s dow '%w' $start_epoch
+        # dow: 0=Sun, 1=Mon, ..., 6=Sat - find days until Monday
+        local days_to_monday=$(( dow == 0 ? 1 : (dow == 1 ? 0 : 8 - dow) ))
+        start_epoch=$((start_epoch + 86400 * days_to_monday))
+
+        local tomorrow_epoch=$((EPOCHSECONDS + 86400))
+        local tomorrow
+        strftime -s tomorrow '%Y-%m-%d' $tomorrow_epoch
+
+        local no_color=$'\033[0m'
+        local week="\n"
+        local cur_epoch=$start_epoch
+        local cur_date entry_idx=1 entry_date entry_feeling
+        local color char
+
+        # Get first entry
+        if [[ ${#recent_entries} -gt 0 && -n "${recent_entries[1]}" ]]; then
+            entry_date="${recent_entries[1]%%,*}"
+            entry_feeling="${recent_entries[1]#*,}"
+        else
+            entry_date=""
+            entry_feeling=""
+        fi
+
+        while true; do
+            strftime -s cur_date '%Y-%m-%d' $cur_epoch
+            [[ $cur_date == "$tomorrow" ]] && break
+
+            if [[ $cur_date == "$entry_date" ]]; then
+                char=$FEELING_FILLED_CHAR
+                # Choose color based on feeling
+                if [[ "$entry_feeling" -ge 7 && "$entry_feeling" -le 10 ]]; then
+                    color=$'\033[0;32m'
+                elif [[ "$entry_feeling" -ge 4 && "$entry_feeling" -le 6 ]]; then
+                    color=$'\033[0;33m'
+                elif [[ "$entry_feeling" -ge 0 && "$entry_feeling" -le 3 ]]; then
+                    color=$'\033[0;31m'
+                else
+                    echo "Invalid feeling: $entry_feeling" >&2
+                    return 1
+                fi
+                # Move to next entry
+                ((entry_idx++))
+                if [[ $entry_idx -le ${#recent_entries} && -n "${recent_entries[$entry_idx]}" ]]; then
+                    entry_date="${recent_entries[$entry_idx]%%,*}"
+                    entry_feeling="${recent_entries[$entry_idx]#*,}"
+                else
+                    entry_date=""
+                fi
+            else
+                color=$no_color
+                char=$FEELING_EMPTY_CHAR
+            fi
+
+            # Add day to week output
+            week+=" ${color}${char}${no_color} "
+
+            # Print the week on Sunday
+            strftime -s dow '%w' $cur_epoch
+            if [[ $dow -eq 0 ]]; then
+                print "${week}\n"
+                week=""
+            fi
+
+            # Increment date
+            cur_epoch=$((cur_epoch + 86400))
         done
 
-        no_color='\033[0m'
-        week="\n"
-
-        last_date=$(tail -1 "$FEELING_DATA_PATH" | cut -d "," -f1)
-        tomorrow=$(date -d '+1 day' +%Y-%m-%d)
-
-        while IFS="," read -r date feeling; do
-            while ! [[ $cur_date > $date && $date != "$last_date" ]] &&
-                ! [[ $cur_date = "$tomorrow" ]]; do
-                if [[ $cur_date = "$date" ]]; then
-                    char=$FEELING_FILLED_CHAR
-                    # Choose color based on feeling
-                    if [[ "$feeling" -ge 7 && "$feeling" -le 10 ]]; then
-                        color='\033[0;32m'
-                    elif [[ "$feeling" -ge 4 && "$feeling" -le 6 ]]; then
-                        color='\033[0;33m'
-                    elif [[ "$feeling" -ge 0 && "$feeling" -le 3 ]]; then
-                        color='\033[0;31m'
-                    else
-                        echo "Invalid feeling: $feeling" >&2
-                        return 1
-                    fi
-                # Date does not have a feeling
-                else
-                    color=$no_color
-                    char=$FEELING_EMPTY_CHAR
-                fi
-                # Add day to week output
-                week+=" ${color}${char}${no_color} "
-                # Print the week
-                if [ "$(date -d "$cur_date" +%w)" -eq 0 ]; then
-                    echo -e "${week}\n"
-                    week=""
-                fi
-                # Increment date
-                cur_date=$(date -d "$cur_date"'+1 day' +%Y-%m-%d)
-            done
-        done < <(tail -n +2 <"$FEELING_DATA_PATH" | tail -28)
-
-        # Print the last week
-        if [[ $(date -d "$cur_date" +%w) != 1 ]]; then
-            echo -e "${week}\n"
-        fi
-
-        # Remove the temporary line
-        if [[ $initial = true ]]; then
-            sed -i '$ d' "$FEELING_DATA_PATH"
+        # Print the last week if not empty
+        strftime -s dow '%w' $cur_epoch
+        if [[ $dow -ne 1 ]]; then
+            print "${week}\n"
         fi
 
     # Edit feelings data
@@ -114,13 +141,15 @@ feeling() {
                         ;;
                     d)
                         date=$OPTARG
-                        # Validate date
-                        if ! [[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] ||
-                            ! date -d "$date" >/dev/null 2>&1; then
+                        # Validate date format
+                        if ! [[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
                             echo "Invalid date: $date" >&2
                             return 1
                         fi
-                        if [[ $date > $(date +%Y-%m-%d) ]]; then
+                        # Check date is not in the future
+                        local today
+                        strftime -s today '%Y-%m-%d' $EPOCHSECONDS
+                        if [[ $date > $today ]]; then
                             echo "Date is in the future: $date" >&2
                             return 1
                         fi
@@ -160,26 +189,38 @@ feeling() {
 
         # Date defaults to today
         if [[ $date = false ]]; then
-            date=$(date +%Y-%m-%d)
+            strftime -s date '%Y-%m-%d' $EPOCHSECONDS
         fi
 
         # Backup feeling data
         \cp "$FEELING_DATA_PATH" "$FEELING_DATA_PATH.bak"
 
         if [[ $remove = true ]]; then
-            sed -i "/$date/d" "$FEELING_DATA_PATH"
+            # Remove line matching date using array filtering
+            local -a new_lines=("${_lines[1]}")
+            local -a data_entries=("${_lines[@]:1}")
+            local entry
+            for entry in "${data_entries[@]}"; do
+                [[ "${entry%%,*}" != "$date" ]] && new_lines+=("$entry")
+            done
+            printf '%s\n' "${new_lines[@]}" > "$FEELING_DATA_PATH"
             return 0
         fi
 
         # Find which line to insert/update
         if [[ $line_num -gt 1 ]]; then
-            while read -r line; do
-                cur_date=$(cut -d "," -f1 <<<"$line")
+            # Iterate through data lines in reverse order
+            local -a data_lines=("${_lines[@]:1}")
+            local -a reversed=("${(Oa)data_lines[@]}")
+            local entry cur_date
+            for entry in "${reversed[@]}"; do
+                cur_date="${entry%%,*}"
                 # Found exact match, replace entire line
-                if [[ $date = "$cur_date" ]]; then
+                if [[ $date == "$cur_date" ]]; then
                     echo "Date already has feeling: $date"
                     if read -rq "REPLY?Do you want to override? (y/n) "; then
-                        sed -i "$line_num""s/.*/$date,$feeling/" "$FEELING_DATA_PATH"
+                        _lines[$line_num]="$date,$feeling"
+                        printf '%s\n' "${_lines[@]}" > "$FEELING_DATA_PATH"
                     fi
                     echo
                     return 0
@@ -187,9 +228,11 @@ feeling() {
                     break
                 fi
                 line_num=$((line_num - 1))
-            done < <(tail -n +2 "$FEELING_DATA_PATH" | tac)
+            done
         fi
 
-        sed -i "$line_num"'a\'"$date"','"$feeling" "$FEELING_DATA_PATH"
+        # Insert new entry after line_num
+        local -a new_lines=("${_lines[@]:0:$line_num}" "$date,$feeling" "${_lines[@]:$line_num}")
+        printf '%s\n' "${new_lines[@]}" > "$FEELING_DATA_PATH"
     fi
 }
