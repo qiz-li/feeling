@@ -1,0 +1,22 @@
+# Feeling configuration
+# Copy to ~/.config/feeling/config.toml
+
+# Default view when running `feeling` with no subcommand
+# Options: "week", "month", "year"
+view = "month"
+
+# Start weeks on Sunday instead of Monday
+sunday_start = false
+
+# Data file location (default: ~/.local/share/feeling/feeling.csv)
+# data_path = "~/path/to/feelings.csv"
+
+# Characters used for week and month views
+[chars]
+filled = "●"
+empty = "◯"
+
+# Characters used for the year heatmap
+[chars.year]
+filled = "●"
+empty = "·"

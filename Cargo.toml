@@ -1,0 +1,26 @@
+[package]
+name = "feeling"
+version = "0.1.0"
+edition = "2024"
+description = "A beautiful mood tracker that lives in your terminal"
+license = "MIT"
+repository = "https://github.com/qiz-li/feeling"
+keywords = ["mood", "tracker", "terminal", "cli"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4", features = ["derive"] }
+crossterm = "0.28"
+directories = "6"
+fs2 = "0.4"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+toml = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
