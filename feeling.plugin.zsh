@@ -68,11 +68,20 @@ feeling() {
         local cur_epoch=$start_epoch
         local cur_date entry_idx=1 entry_date entry_feeling
         local color char
+        local start_date
+        strftime -s start_date '%Y-%m-%d' $start_epoch
 
-        # Get first entry
-        if [[ ${#recent_entries} -gt 0 && -n "${recent_entries[1]}" ]]; then
-            entry_date="${recent_entries[1]%%,*}"
-            entry_feeling="${recent_entries[1]#*,}"
+        # Skip entries before the calendar start
+        while [[ $entry_idx -le ${#recent_entries} ]]; do
+            entry_date="${recent_entries[$entry_idx]%%,*}"
+            [[ $entry_date > $start_date || $entry_date == $start_date ]] && break
+            ((entry_idx++))
+        done
+
+        # Get current entry
+        if [[ $entry_idx -le ${#recent_entries} && -n "${recent_entries[$entry_idx]}" ]]; then
+            entry_date="${recent_entries[$entry_idx]%%,*}"
+            entry_feeling="${recent_entries[$entry_idx]#*,}"
         else
             entry_date=""
             entry_feeling=""
