@@ -1,14 +1,14 @@
 <h3 align="center">
   <code>Feeling</code>
 </h3>
-<p align="center">A beautiful mood tracker for your <i>feelings</i>
+<p align="center">A beautiful terminal mood tracker for your <i>feelings</i>
 </p>
 <p align="center">
   <img width="700" src="feeling.svg" />
 </p>
 <p align="center">
   <sub>Demo made with
-    <code> <a href="https://github.com/marionebl/svg-term-cli">svg-term-cli</a></code>
+    <code><a href="https://github.com/marionebl/svg-term-cli">svg-term-cli</a></code>
       using my
     <code><a href="https://github.com/qiz-li/dotfiles"><b>dotfiles</b></a></code>
   </sub>
@@ -16,17 +16,19 @@
 
 ## Overview
 
-A beautiful mood tracker that lives in your terminal. Log how you feel each day on a 1-10 scale and watch the pattern emerge. Data is a plain csv file on local machine
+A simple, blazing-fast mood tracker that lives in your terminal. Research suggests that tracking your mood can improve emotional awareness and well-being by recognizing patterns over time (Kauer et al., 2012). Log how you feel each day on a 1–10 scale and watch the patterns emerge.
+
+Data is stored locally as a plain CSV file.
 
 ## Installation
 
 ```shell
-cargo install --git https://github.com/qiz-li/feeling.git
+curl -sSf https://raw.githubusercontent.com/qiz-li/feeling/main/install.sh | sh
 ```
 
 ## Usage
 
-```shell
+```
 feeling 8                     # log today's feeling (1-10)
 feeling 6 -d 2024-03-15       # log a specific date
 feeling                       # show default view (month)
@@ -99,4 +101,4 @@ date,feeling
 2024-03-16,4
 ```
 
-Atomic writes, file locking, rotating backups, and sha256 integrity checks keep your data safe.
+Atomic writes, file locking, rotating backups, and sha256 integrity checks to keep data safe.
