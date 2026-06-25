@@ -1,7 +1,7 @@
 <h3 align="center">
   <code>Feeling</code>
 </h3>
-<p align="center">A Zsh script for your <i>feelings</i>
+<p align="center">A beautiful mood tracker for your <i>feelings</i>
 </p>
 <p align="center">
   <img width="700" src="feeling.svg" />
@@ -16,100 +16,87 @@
 
 ## Overview
 
-The script is inspired by this Reddit [post](https://github.com/qiz-li/dotfiles).
-The idea is to enter your feeling each day on a 1-10 scale.
-This gives time to reflect upon your day to create more meaningful goals and improve wellness.
-By displaying your feelings in a beautiful calendar,
-you can also gain insight into trends in your feelings while prettifying your terminal.
+A beautiful mood tracker that lives in your terminal. Log how you feel each day on a 1-10 scale and watch the pattern emerge. Data is a plain csv file on local machine
 
 ## Installation
 
-> Note for **macOS** users.
-> As the script makes use of GNU versions of tools,
-> please link [`gsed`](https://formulae.brew.sh/formula/gnu-sed) to `sed` and `gdate` to `date`.
-
-### [Oh My Zsh](http://ohmyz.sh)
-
-Clone this repository into the custom plugins folder:
-
 ```shell
-git clone https://github.com/qiz-li/feeling.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/feeling
+cargo install --git https://github.com/qiz-li/feeling.git
 ```
 
-Update Oh My Zsh plugins list in `.zshrc`:
+## Usage
 
 ```shell
-plugins=(
-    # Other plugins...
-    feeling
-)
+feeling 8                     # log today's feeling (1-10)
+feeling 6 -d 2024-03-15       # log a specific date
+feeling                       # show default view (month)
+feeling week                  # show current week
+feeling month                 # show last 4 weeks
+feeling year                  # full-year heatmap
+feeling prompt                # single colored glyph (for starship/p10k)
+feeling remove                # remove today's entry
+feeling remove -d 2024-03-15  # remove a specific date
+feeling export                # dump raw CSV to stdout
 ```
 
-### [Antigen](https://github.com/zsh-users/antigen)
+### CLI flags
 
-Add the following to your `.zshrc`:
+| Flag | Description |
+|---|---|
+| `--data-path <path>` | Override data file location |
+| `--view <week\|month\|year>` | Override default view |
 
-```shell
-antigen bundle qiz-li/feeling@main
+### Prompt integration
+
+Add to your `starship.toml`:
+
+```toml
+[custom.feeling]
+command = "feeling prompt"
+when = true
 ```
 
 ## Configuration
 
-#### `FEELING_DATA_PATH`
+Create `~/.config/feeling/config.toml` (see [`config.example.toml`](config.example.toml)):
 
-Path to file in which your feelings and corresponding dates will be stored.
-Defaults to `~/.config/feeling/feelings.csv`.
+```toml
+view = "month"           # default view: week, month, year
+sunday_start = false     # start weeks on Sunday
+# data_path = "~/path/to/feelings.csv"
 
-#### `FEELING_FILLED_CHAR`
+[chars]
+filled = "●"
+empty = "◯"
 
-Character to represent days you have rated.
-Defaults to `●`.
-
-#### `FEELING_EMPTY_CHAR`
-
-Character to represent days that are unrated.
-Defaults to `◯`.
-
-## Usage
-
-Use the `-h` flag for help.
-
-### Show Calendar
-
-Run without any arguments:
-
-```shell
-feeling
+[chars.year]
+filled = "●"
+empty = "·"
 ```
 
-### Add/Change Feeling
+All options can also be set via environment variables.
+> Precedence: **CLI flags > env vars > config file > defaults**.
 
-Add your feeling as an argument.
 
-To add/change today's feeling:
+| Variable | Description |
+|---|---|
+| `FEELING_DATA_PATH` | Override data file location |
+| `FEELING_CONFIG_PATH` | Override config file location |
+| `FEELING_VIEW` | Default view (`week`, `month`, `year`) |
+| `FEELING_SUNDAY_START` | `1` or `true` for Sunday start |
+| `FEELING_FILLED_CHAR` | Filled character |
+| `FEELING_EMPTY_CHAR` | Empty character |
+| `FEELING_YEAR_FILLED_CHAR` | Filled character for year heatmap |
+| `FEELING_YEAR_EMPTY_CHAR` | Empty character for year heatmap |
 
-```shell
-feeling 8
+## Data
+
+Stored as plain CSV at `$XDG_DATA_HOME/feeling/feeling.csv` (defaults to `~/.local/share/feeling/feeling.csv`):
+
+```
+date,feeling
+2024-03-15,7
+2024-03-16,4
 ```
 
-Or specify a date using the `-d` flag:
-
-```shell
-feeling -d 2022-02-22 3
-```
-
-### Remove Feeling
-
-Add the `-r` flag to remove a feeling.
-
-To remove today's feeling:
-
-```shell
-feeling -r
-```
-
-Or a specific date:
-
-```shell
-feeling -d 2022-03-20 -r
-```
+Atomic writes, file locking, rotating backups, and sha256 integrity checks keep your data safe.
