@@ -56,7 +56,7 @@ fn main() {
             }
         }
         Some(Command::Remove { date }) => {
-            let target = parse_date_or_today(date.as_deref());
+            let target = parse_date_or_today(date.as_deref().or(cli.date.as_deref()));
             let existing = entries.iter().find(|e| e.date == target);
             if existing.is_none() {
                 eprintln!("no entry found for {target}");
