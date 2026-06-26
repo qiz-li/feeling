@@ -21,6 +21,10 @@ pub struct Cli {
     /// Default view when no subcommand is given
     #[arg(long, value_enum)]
     pub view: Option<View>,
+
+    /// Skip confirmation prompts
+    #[arg(short, long, global = true)]
+    pub yes: bool,
 }
 
 #[derive(Subcommand)]

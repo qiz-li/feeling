@@ -10,6 +10,7 @@ use cli::{Cli, Command, View};
 use config::Config;
 use display::DisplayChars;
 use model::Entry;
+use std::io::{self, BufRead, Write};
 use std::process;
 
 fn main() {
@@ -56,12 +57,18 @@ fn main() {
         }
         Some(Command::Remove { date }) => {
             let target = parse_date_or_today(date.as_deref());
-            let before = entries.len();
-            entries.retain(|e| e.date != target);
-            if entries.len() == before {
+            let existing = entries.iter().find(|e| e.date == target);
+            if existing.is_none() {
                 eprintln!("no entry found for {target}");
                 process::exit(1);
             }
+            if !cli.yes {
+                let feeling = existing.unwrap().feeling;
+                if !confirm(&format!("remove entry for {target} (feeling: {feeling})?")) {
+                    process::exit(0);
+                }
+            }
+            entries.retain(|e| e.date != target);
             if let Err(e) = storage::write_entries(&path, &entries) {
                 eprintln!("error: {e}");
                 process::exit(1);
@@ -85,6 +92,12 @@ fn main() {
                 };
 
                 if let Some(pos) = entries.iter().position(|e| e.date == date) {
+                    if !cli.yes {
+                        let old = entries[pos].feeling;
+                        if !confirm(&format!("overwrite {date} (currently {old}) with {feeling}?")) {
+                            process::exit(0);
+                        }
+                    }
                     entries[pos] = entry;
                 } else {
                     let pos = entries.partition_point(|e| e.date < date);
@@ -125,6 +138,16 @@ fn view_from_str(s: &str) -> Option<View> {
         "year" => Some(View::Year),
         _ => None,
     }
+}
+
+fn confirm(msg: &str) -> bool {
+    eprint!("{msg} [y/N] ");
+    io::stderr().flush().unwrap();
+    let mut line = String::new();
+    if io::stdin().lock().read_line(&mut line).is_err() {
+        return false;
+    }
+    matches!(line.trim(), "y" | "Y" | "yes" | "YES")
 }
 
 fn parse_date_or_today(date_str: Option<&str>) -> NaiveDate {
