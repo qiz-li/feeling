@@ -1,0 +1,34 @@
+class Feeling < Formula
+  desc "A beautiful mood tracker for your terminal"
+  homepage "https://github.com/qiz-li/feeling"
+  version "${VERSION}"
+  license "MIT"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "https://github.com/qiz-li/feeling/releases/download/v${VERSION}/feeling-aarch64-apple-darwin.tar.gz"
+      sha256 "${SHA_ARM_MAC}"
+    else
+      url "https://github.com/qiz-li/feeling/releases/download/v${VERSION}/feeling-x86_64-apple-darwin.tar.gz"
+      sha256 "${SHA_X86_MAC}"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm?
+      url "https://github.com/qiz-li/feeling/releases/download/v${VERSION}/feeling-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "${SHA_ARM_LINUX}"
+    else
+      url "https://github.com/qiz-li/feeling/releases/download/v${VERSION}/feeling-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "${SHA_X86_LINUX}"
+    end
+  end
+
+  def install
+    bin.install "feeling"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/feeling --version")
+  end
+end

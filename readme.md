@@ -22,6 +22,20 @@ Data is stored locally as a plain CSV file.
 
 ## Installation
 
+### Homebrew
+
+```shell
+brew install qiz-li/tap/feeling
+```
+
+### Cargo
+
+```shell
+cargo install feeling
+```
+
+### Shell script
+
 ```shell
 curl -sSf https://raw.githubusercontent.com/qiz-li/feeling/main/install.sh | sh
 ```
