@@ -4,7 +4,7 @@
 <p align="center">A beautiful terminal mood tracker for your <i>feelings</i>
 </p>
 <p align="center">
-  <img width="700" src="feeling.svg" />
+  <img width="700" src="assets/demo.svg" />
 </p>
 <p align="center">
   <sub>Demo made with
