@@ -3,6 +3,7 @@ mod config;
 mod display;
 mod model;
 mod storage;
+mod stats;
 
 use chrono::{Local, NaiveDate};
 use clap::Parser;
@@ -38,9 +39,9 @@ fn main() {
     let week_start = config.week_start();
 
     match cli.command {
-        Some(Command::Week) => render_or_exit(display::week::render(&entries, &chars, week_start)),
-        Some(Command::Month) => render_or_exit(display::month::render(&entries, &chars, week_start)),
-        Some(Command::Year) => render_or_exit(display::year::render(&entries, &year_chars, week_start)),
+        Some(Command::Week) => render_or_exit(display::week::render(&entries, &chars, week_start, cli.stats)),
+        Some(Command::Month) => render_or_exit(display::month::render(&entries, &chars, week_start, cli.stats)),
+        Some(Command::Year) => render_or_exit(display::year::render( &entries, &year_chars, week_start, cli.stats)),
         Some(Command::Prompt) => {
             let today = Local::now().date_naive();
             let force_color = display::use_color_force();
@@ -115,9 +116,9 @@ fn main() {
                     .unwrap_or(View::Month);
 
                 match default_view {
-                    View::Week => render_or_exit(display::week::render(&entries, &chars, week_start)),
-                    View::Month => render_or_exit(display::month::render(&entries, &chars, week_start)),
-                    View::Year => render_or_exit(display::year::render(&entries, &year_chars, week_start)),
+                    View::Week => render_or_exit(display::week::render(&entries, &chars, week_start, cli.stats)),
+                    View::Month => render_or_exit(display::month::render(&entries, &chars, week_start, cli.stats)),
+                    View::Year => render_or_exit(display::year::render( &entries, &year_chars, week_start, cli.stats)),
                 }
             }
         }
