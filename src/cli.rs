@@ -25,6 +25,10 @@ pub struct Cli {
     /// Skip confirmation prompts
     #[arg(short, long, global = true)]
     pub yes: bool,
+
+    /// Display stats
+    #[arg(short, long, global = true)]
+    pub stats: bool,
 }
 
 #[derive(Subcommand)]

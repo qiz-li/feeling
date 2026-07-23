@@ -5,7 +5,7 @@ use crossterm::style::{self, Stylize};
 use std::collections::HashMap;
 use std::io::{self, Write};
 
-pub fn render(entries: &[Entry], chars: &DisplayChars, week_start: Weekday) -> io::Result<()> {
+pub fn render(entries: &[Entry], chars: &DisplayChars, week_start: Weekday, show_stats: bool) -> io::Result<()> {
     let stdout = io::stdout();
     let mut out = stdout.lock();
     let colored = use_color();
@@ -47,6 +47,11 @@ pub fn render(entries: &[Entry], chars: &DisplayChars, week_start: Weekday) -> i
 
     if !week.is_empty() {
         writeln!(out, "{week}")?;
+    }
+
+    if show_stats {
+        let stats = crate::stats::Stats::from_entries(entries, start, today);
+        writeln!(out, "{stats}")?;
     }
 
     writeln!(out)?;

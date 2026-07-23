@@ -61,6 +61,7 @@ feeling export                # dump raw CSV to stdout
 |---|---|
 | `--data-path <path>` | Override data file location |
 | `--view <week\|month\|year>` | Override default view |
+| `--stats`                    | Display stats in views      |
 
 ### Prompt integration
 
